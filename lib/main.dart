@@ -6,6 +6,22 @@ void main() {
   runApp(const DocumentApp());
 }
 
+String formatDate(DateTime dateTime) {
+  final today = DateTime.now();
+  final difference = dateTime.difference(today);
+
+  return switch (difference) {
+    Duration(inDays: 0) => 'today',
+    Duration(inDays: 1) => 'tomorrow',
+    Duration(inDays: -1) => 'yesterday',
+    Duration(inDays: final days) when days > 7 => '${days ~/ 7} weeks from now',
+    Duration(inDays: final days) when days < -7 =>
+      '${days.abs() ~/ 7} weeks ago',
+    Duration(inDays: final days, isNegative: true) => '${days.abs()} days ago',
+    Duration(inDays: final days) => '$days days from now',
+  };
+}
+
 class DocumentApp extends StatelessWidget {
   const DocumentApp({super.key});
 
@@ -26,23 +42,23 @@ class DocumentScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (title, :modified) = document.metadata;
+    final formattedModifiedDate = formatDate(modified);
     final blocks = document.getBlocks();
 
     return Scaffold(
       appBar: AppBar(title: Text(title)),
       body: Column(
         children: [
-          Text('Last modified: $modified'),
+          Text('Last modified: $formattedModifiedDate'),
           Expanded(
             child: ListView.builder(
               itemCount: blocks.length,
               itemBuilder: (context, index) {
                 return BlockWidget(block: blocks[index]);
               },
-            )  
-          )
-          
-        ]
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -51,10 +67,7 @@ class DocumentScreen extends StatelessWidget {
 class BlockWidget extends StatelessWidget {
   final Block block;
 
-  const BlockWidget({
-    required this.block,
-    super.key,
-  });
+  const BlockWidget({required this.block, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -62,15 +75,12 @@ class BlockWidget extends StatelessWidget {
     textStyle = switch (block.type) {
       'h1' => Theme.of(context).textTheme.displayMedium,
       'p' || 'checkbox' => Theme.of(context).textTheme.bodyMedium,
-      _ => Theme.of(context).textTheme.bodySmall
+      _ => Theme.of(context).textTheme.bodySmall,
     };
 
     return Container(
       margin: const EdgeInsets.all(8),
-      child: Text(
-        block.text,
-        style: textStyle,
-      ),
+      child: Text(block.text, style: textStyle),
     );
   }
 }
